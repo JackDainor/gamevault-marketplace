@@ -33,7 +33,7 @@ const createErrors:Record<string,string>={
 };
 
 export default async function AdminPanelPage({searchParams}:{searchParams:Promise<{
-  commissionSaved?:string;commissionError?:string;intermediarySaved?:string;intermediaryError?:string;
+  commissionSaved?:string;commissionError?:string;intermediarySaved?:string;intermediaryError?:string;clientSearch?:string;
   adminCreated?:string;adminCreateError?:string;code?:string;edited?:string;deleted?:string;editError?:string;deleteError?:string;
 }>}) {
   if (!(await isAdmin())) redirect("/admin");
@@ -41,6 +41,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
   await ensureSalesTable();
   const params=await searchParams;
   const searchCode=(params.code??"").trim().slice(0,30);
+  const clientSearch=(params.clientSearch??"").trim().slice(0,120);
   const sql=getDb();
   const listings=await sql`
     SELECT l.id,l.code,l.game,l.title,l.description,l.account_details,l.seller_price::text,
@@ -50,6 +51,18 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
     WHERE (${searchCode} = '' OR l.code ILIKE ${"%" + searchCode + "%"})
     ORDER BY CASE WHEN l.status='pending' THEN 0 ELSE 1 END, l.created_at DESC
   ` as AdminListing[];
+  const clients=await sql`
+    SELECT u.id,u.name,u.email,u.whatsapp,u.created_at,COUNT(l.id)::int AS listings_count
+    FROM users u
+    LEFT JOIN listings l ON l.seller_id=u.id
+    WHERE u.email NOT LIKE 'admin-%@gamevault.local'
+      AND (${clientSearch} = ''
+        OR u.name ILIKE ${"%" + clientSearch + "%"}
+        OR u.email ILIKE ${"%" + clientSearch + "%"}
+        OR u.whatsapp ILIKE ${"%" + clientSearch + "%"})
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
+  `;
   const soldListings=await sql`
     SELECT id,listing_code AS code,game,title,public_price::text,sold_at,
            seller_name,seller_whatsapp,buyer_name,buyer_whatsapp
@@ -78,6 +91,21 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
       {params.intermediarySaved&&<p className="success-message">WhatsApp del intermediario actualizado. Todas las consultas nuevas llegarán a este número.</p>}
       {params.intermediaryError&&<p className="form-error">Escribe un número válido con código de país (entre 8 y 15 dígitos).</p>}
       {!intermediarySetting[0]?.value&&<p className="form-error">Aún no configuraste el número. El botón de contacto de las publicaciones permanecerá desactivado hasta guardarlo.</p>}
+    </section>
+
+
+    <section className="admin-clients">
+      <div className="section-head"><div><span className="eyebrow">COMUNIDAD</span><h2>Clientes registrados ({clients.length})</h2><p className="muted">Personas que crearon una cuenta en GameVault. Los usuarios internos de publicaciones propias no aparecen aquí.</p></div></div>
+      <form method="get" action="/admin/panel" className="admin-search-form">
+        <input name="clientSearch" defaultValue={clientSearch} placeholder="Buscar por nombre, correo o WhatsApp" aria-label="Buscar clientes registrados"/>
+        <button className="btn primary" type="submit">Buscar cliente</button>
+        {clientSearch&&<Link href="/admin/panel" className="btn">Limpiar</Link>}
+      </form>
+      {clients.length===0?<div className="empty-state"><h3>{clientSearch?"No encontramos clientes":"Aún no hay clientes registrados"}</h3><p className="muted">{clientSearch?"Prueba con otro nombre, correo o número.":"Cuando una persona cree una cuenta, aparecerá aquí."}</p></div>:
+        <div className="admin-clients-list">{clients.map((client:any)=><article className="admin-client-card" key={client.id}>
+          <div><span className="eyebrow">{Number(client.listings_count)>0?"VENDEDOR REGISTRADO":"CLIENTE REGISTRADO"}</span><h3>{client.name}</h3><p className="muted">Correo: <a href={`mailto:${client.email}`}>{client.email}</a></p><p className="muted">WhatsApp: {client.whatsapp}</p><p className="muted">Registro: {new Date(client.created_at).toLocaleString("es-BO")}</p></div>
+          <div className="admin-client-meta"><span className="status-pill status-approved">{Number(client.listings_count)} publicaciones</span><a className="whatsapp-link" href={`https://wa.me/${String(client.whatsapp).replace(/\\D/g,"")}`} target="_blank" rel="noreferrer">Contactar por WhatsApp</a></div>
+        </article>)}</div>}
     </section>
 
     <section className="admin-create">
