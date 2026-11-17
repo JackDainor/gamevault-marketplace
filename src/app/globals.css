@@ -60,3 +60,7 @@ button[aria-busy="true"]{pointer-events:none}
 .receipt-paper footer{margin-top:35px;padding-top:15px;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px}
 @media(max-width:600px){.admin-search-form{flex-wrap:wrap}.admin-search-form input{flex-basis:100%}.admin-sale-card{align-items:flex-start;flex-direction:column}.receipt-paper{padding:25px 18px}.receipt-header{align-items:flex-start;flex-direction:column}.receipt-paper>p:not(.eyebrow):not(.receipt-code){align-items:flex-start;flex-direction:column;gap:4px}.receipt-paper>p strong{text-align:left}}
 @media print{body{background:#fff!important}.receipt-page{padding:0;background:#fff}.receipt-paper{width:100%;padding:0;border-radius:0;box-shadow:none}.no-print{display:none!important}.receipt-note{break-inside:avoid}}
+
+.sale-buyer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 8px}
+.sale-buyer-fields input{min-width:0;width:100%;padding:8px 9px;border:1px solid #33445d;background:#0b1220;color:#fff;border-radius:8px;font-size:11px}
+@media(max-width:520px){.sale-buyer-fields{grid-template-columns:1fr}}
