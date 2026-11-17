@@ -124,6 +124,23 @@ export async function updateListingStatusAction(formData: FormData) {
   redirect("/admin/panel");
 }
 
+export async function updateIntermediaryWhatsappAction(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const phoneDigits = whatsapp.replace(/\\D/g, "");
+  if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+    redirect("/admin/panel?intermediaryError=1");
+  }
+  await ensureListingsTable();
+  const sql = getDb();
+  await sql`
+    INSERT INTO app_settings (key, value, updated_at)
+    VALUES ('intermediary_whatsapp', ${phoneDigits}, NOW())
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+  `;
+  redirect("/admin/panel?intermediarySaved=1");
+}
+
 export async function updateCommissionAction(formData: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const amount = Number(formData.get("commission"));
