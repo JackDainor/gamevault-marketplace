@@ -59,6 +59,10 @@ export async function ensureSettingsTable() {
     INSERT INTO app_settings (key, value) VALUES ('commission_bs', '30')
     ON CONFLICT (key) DO NOTHING
   `;
+  await sql`
+    INSERT INTO app_settings (key, value) VALUES ('intermediary_whatsapp', '')
+    ON CONFLICT (key) DO NOTHING
+  `;
 }
 
 
