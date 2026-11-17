@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin, requireAdmin } from "@/lib/auth";
-import { ensureListingsTable, getDb } from "@/lib/db";
+import { ensureSalesTable, ensureListingsTable, getDb } from "@/lib/db";
 import {
   adminLogoutAction,
   createAdminListingAction,
@@ -37,7 +37,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
 }>}) {
   if (!(await isAdmin())) redirect("/admin");
   await requireAdmin();
-  await ensureListingsTable();
+  await ensureSalesTable();
   const params=await searchParams;
   const searchCode=(params.code??"").trim().slice(0,30);
   const sql=getDb();
@@ -50,10 +50,9 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
     ORDER BY CASE WHEN l.status='pending' THEN 0 ELSE 1 END, l.created_at DESC
   ` as AdminListing[];
   const soldListings=await sql`
-    SELECT l.id,l.code,l.game,l.title,l.public_price::text,l.updated_at,
-           u.name AS seller_name,u.whatsapp AS seller_whatsapp
-    FROM listings l JOIN users u ON u.id=l.seller_id
-    WHERE l.status='sold' ORDER BY l.updated_at DESC
+    SELECT id,listing_code AS code,game,title,public_price::text,sold_at,
+           seller_name,seller_whatsapp,buyer_name,buyer_whatsapp
+    FROM sales ORDER BY sold_at DESC
   `;
   const setting=await sql`SELECT value FROM app_settings WHERE key='commission_bs' LIMIT 1`;
 
@@ -97,7 +96,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
         {item.images?.[0]&&<img src={item.images[0]} alt={item.title}/>}
         <div className="admin-list-main"><span className="eyebrow">{item.game} · {item.code}</span><h3>{item.title}</h3><p className="muted">Vendedor: {item.seller_name} · {item.seller_email}</p><p className="muted">Recibe: Bs {Number(item.seller_price).toFixed(2)} · Comisión: Bs {Number(item.commission_bs).toFixed(2)} · Público: Bs {Number(item.public_price).toFixed(2)}</p><a className="whatsapp-link" href={`https://wa.me/${item.seller_whatsapp.replace(/\D/g,"")}`} target="_blank" rel="noreferrer">Contactar por WhatsApp: {item.seller_whatsapp}</a><p><span className={`status-pill status-${item.status}`}>{labels[item.status]??item.status}</span></p>
           <div className="admin-status-actions">
-            {(["approved","reserved","sold","rejected","pending"] as const).map(status=><form action={updateListingStatusAction} key={status}><input type="hidden" name="listingId" value={item.id}/><input type="hidden" name="status" value={status}/><PendingButton className={status==="approved"?"btn primary":"btn"} pendingText="Actualizando...">{status==="approved"?"Aprobar":status==="reserved"?"Reservar":status==="sold"?"Marcar vendida":status==="rejected"?"Rechazar":"Pendiente"}</PendingButton></form>)}
+            {(["approved","reserved","sold","rejected","pending"] as const).map(status=><form action={updateListingStatusAction} key={status}><input type="hidden" name="listingId" value={item.id}/><input type="hidden" name="status" value={status}/>{status==="sold"&&<div className="sale-buyer-fields"><input name="buyerName" placeholder="Comprador (opcional)" aria-label="Nombre del comprador"/><input name="buyerWhatsapp" placeholder="WhatsApp del comprador (opcional)" aria-label="WhatsApp del comprador"/></div>}<PendingButton className={status==="approved"?"btn primary":"btn"} pendingText="Actualizando...">{status==="approved"?"Aprobar":status==="reserved"?"Reservar":status==="sold"?"Marcar vendida":status==="rejected"?"Rechazar":"Pendiente"}</PendingButton></form>)}
           </div>
           <details className="admin-edit-details"><summary>Editar publicación</summary>
             <form action={updateListingAction} className="admin-edit-form">
@@ -118,7 +117,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
     <section className="admin-sales">
       <div className="section-head"><div><span className="eyebrow">REGISTRO</span><h2>Historial de ventas ({soldListings.length})</h2><p className="muted">Aquí aparecen las cuentas que marcaste como vendidas desde el panel.</p></div></div>
       {soldListings.length===0?<div className="empty-state"><h3>Aún no hay ventas registradas</h3><p className="muted">Cuando marques una publicación como vendida, se guardará aquí.</p></div>:
-        <div className="admin-sales-list">{soldListings.map((sale:any)=><article className="admin-sale-card" key={sale.id}><div><span className="eyebrow">{sale.game} · {sale.code}</span><h3>{sale.title}</h3><p className="muted">Vendedor: {sale.seller_name} · Vendida: {new Date(sale.updated_at).toLocaleString("es-BO")}</p><strong>Bs {Number(sale.public_price).toFixed(2)}</strong></div><Link className="btn primary" href={`/admin/ventas/${sale.id}/comprobante`}>Ver comprobante</Link></article>)}</div>}
+        <div className="admin-sales-list">{soldListings.map((sale:any)=><article className="admin-sale-card" key={sale.id}><div><span className="eyebrow">{sale.game} · {sale.code}</span><h3>{sale.title}</h3><p className="muted">Vendedor: {sale.seller_name} · {sale.buyer_name ? `Comprador: ${sale.buyer_name} · ` : ""}Vendida: {new Date(sale.sold_at).toLocaleString("es-BO")}</p><strong>Bs {Number(sale.public_price).toFixed(2)}</strong></div><Link className="btn primary" href={`/admin/ventas/${sale.id}/comprobante`}>Ver comprobante</Link></article>)}</div>}
     </section>
   </main>;
 }
