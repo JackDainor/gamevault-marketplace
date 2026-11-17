@@ -72,3 +72,41 @@ export async function requireUser() {
   if (!user) redirect("/login");
   return user;
 }
+
+const ADMIN_COOKIE_NAME = "gamevault_admin";
+
+export async function createAdminSession() {
+  const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
+  const payload = `admin.${expires}`;
+  const token = `${payload}.${sign(payload)}`;
+  const store = await cookies();
+  store.set(ADMIN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: SESSION_SECONDS,
+  });
+}
+
+export async function destroyAdminSession() {
+  const store = await cookies();
+  store.delete(ADMIN_COOKIE_NAME);
+}
+
+export async function isAdmin() {
+  const store = await cookies();
+  const token = store.get(ADMIN_COOKIE_NAME)?.value;
+  if (!token) return false;
+  const [role, expiresText, signature] = token.split(".");
+  if (role !== "admin" || !expiresText || !signature) return false;
+  const payload = `admin.${expiresText}`;
+  const expected = sign(payload);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b) && Number(expiresText) >= Math.floor(Date.now() / 1000);
+}
+
+export async function requireAdmin() {
+  if (!(await isAdmin())) redirect("/admin");
+}
