@@ -66,3 +66,23 @@ button[aria-busy="true"]{pointer-events:none}
 @media(max-width:520px){.sale-buyer-fields{grid-template-columns:1fr}}
 
 a.nav-loading{pointer-events:none;opacity:.78}
+
+
+/* PWA install and registered customers */
+.install-app-btn{border-color:#a3e63570;color:#a3e635;white-space:nowrap}
+.install-help-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:#000b}
+.install-help{position:relative;width:min(100%,460px);padding:28px;background:#111827;border:1px solid #33445d;border-radius:20px;box-shadow:0 25px 80px #0009}
+.install-help h2{font:700 27px 'Space Grotesk';margin:10px 0}
+.install-help>p,.install-help-step span{color:#c4cedd;font-size:13px;line-height:1.6}
+.install-help-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border:1px solid #33445d;border-radius:10px;background:#0b1220;color:#fff;display:grid;place-items:center}
+.install-help-step{display:grid;gap:5px;padding:13px;margin:12px 0;background:#0b1220;border:1px solid #26344a;border-radius:12px}
+.install-help-step strong{color:#a3e635;font-size:13px}
+.install-help>.btn{margin-top:8px;width:100%}
+.admin-clients{padding:42px 0 12px}
+.admin-clients-list{display:grid;gap:12px}
+.admin-client-card{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px;border:1px solid #26344a;background:#111827;border-radius:16px}
+.admin-client-card h3{margin:7px 0;font-size:18px}
+.admin-client-card p{margin:6px 0;font-size:12px;overflow-wrap:anywhere}
+.admin-client-card p a{color:#a3e635}
+.admin-client-meta{display:grid;justify-items:end;gap:10px;flex-shrink:0}
+@media(max-width:600px){.admin-client-card{align-items:flex-start;flex-direction:column}.admin-client-meta{justify-items:start}}
