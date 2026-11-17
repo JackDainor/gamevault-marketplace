@@ -197,3 +197,10 @@ export async function deleteListingAction(formData: FormData) {
   `;
   redirect("/admin/panel?deleted=1");
 }
+
+
+export async function searchListingsAction(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const code = String(formData.get("code") ?? "").trim().slice(0, 30);
+  redirect(code ? `/admin/panel?code=${encodeURIComponent(code)}` : "/admin/panel");
+}
