@@ -120,3 +120,54 @@ export async function updateCommissionAction(formData: FormData) {
   `;
   redirect("/admin/panel?commissionSaved=1");
 }
+
+
+export async function updateListingAction(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const id = String(formData.get("listingId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const accountDetails = String(formData.get("accountDetails") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const phoneDigits = whatsapp.replace(/\\D/g, "");
+  const price = Number(formData.get("price"));
+
+  if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/panel?editError=id");
+  if (title.length < 4 || title.length > 120 || description.length < 20 || description.length > 1800 || accountDetails.length < 5 || accountDetails.length > 1200) redirect("/admin/panel?editError=fields");
+  if (phoneDigits.length < 8 || phoneDigits.length > 15) redirect("/admin/panel?editError=whatsapp");
+  if (!Number.isFinite(price) || price <= 0 || price > 1000000) redirect("/admin/panel?editError=price");
+
+  await ensureListingsTable();
+  const sql = getDb();
+  await sql`
+    UPDATE listings
+    SET title = ${title}, description = ${description}, account_details = ${accountDetails},
+        seller_price = ${price}, public_price = ${price + 0} + commission_bs,
+        updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  await sql`
+    UPDATE users SET whatsapp = ${whatsapp}
+    WHERE id = (SELECT seller_id FROM listings WHERE id = ${id})
+  `;
+  redirect("/admin/panel?edited=1");
+}
+
+export async function deleteListingAction(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const id = String(formData.get("listingId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/panel?deleteError=1");
+  await ensureListingsTable();
+  const sql = getDb();
+  const ownerRows = await sql`SELECT seller_id FROM listings WHERE id = ${id} LIMIT 1`;
+  if (!ownerRows[0]) redirect("/admin/panel?deleteError=1");
+  const sellerId = String(ownerRows[0].seller_id);
+  await sql`DELETE FROM listings WHERE id = ${id}`;
+  await sql`
+    DELETE FROM users
+    WHERE id = ${sellerId}
+      AND email LIKE 'admin-%@gamevault.local'
+      AND NOT EXISTS (SELECT 1 FROM listings WHERE seller_id = ${sellerId})
+  `;
+  redirect("/admin/panel?deleted=1");
+}
