@@ -125,30 +125,56 @@ export async function updateCommissionAction(formData: FormData) {
 export async function updateListingAction(formData: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const id = String(formData.get("listingId") ?? "");
+  const game = String(formData.get("game") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const accountDetails = String(formData.get("accountDetails") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
-  const phoneDigits = whatsapp.replace(/\D/g, "");
+  const phoneDigits = whatsapp.replace(/\\D/g, "");
   const price = Number(formData.get("price"));
-
+  const allowedGames = ["Free Fire", "Roblox", "Fortnite", "Call of Duty", "Otro"];
   if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/panel?editError=id");
+  if (!allowedGames.includes(game)) redirect("/admin/panel?editError=game");
   if (title.length < 4 || title.length > 120 || description.length < 20 || description.length > 1800 || accountDetails.length < 5 || accountDetails.length > 1200) redirect("/admin/panel?editError=fields");
   if (phoneDigits.length < 8 || phoneDigits.length > 15) redirect("/admin/panel?editError=whatsapp");
   if (!Number.isFinite(price) || price <= 0 || price > 1000000) redirect("/admin/panel?editError=price");
 
+  const files = formData.getAll("images").filter((item): item is File => item instanceof File && item.size > 0);
+  if (files.length > 10 || files.some(file => !ALLOWED_TYPES.includes(file.type)) || files.some(file => file.size > MAX_FILE_SIZE) || files.reduce((sum,file)=>sum+file.size,0) > 4*1024*1024) {
+    redirect("/admin/panel?editError=images");
+  }
+
   await ensureListingsTable();
   const sql = getDb();
+  if (files.length > 0) {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) redirect("/admin/panel?editError=storage");
+    const imageUrls: string[] = [];
+    for (const file of files) {
+      const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const blob = await put(`listings/admin-edit/${id}/${randomBytes(12).toString("hex")}.${extension}`, file, {
+        access: "public", addRandomSuffix: true, contentType: file.type, token,
+      });
+      imageUrls.push(blob.url);
+    }
+    await sql`
+      UPDATE listings
+      SET game=${game}, title=${title}, description=${description}, account_details=${accountDetails},
+          seller_price=${price}, public_price=${price} + commission_bs,
+          images=${JSON.stringify(imageUrls)}::jsonb, updated_at=NOW()
+      WHERE id=${id}
+    `;
+  } else {
+    await sql`
+      UPDATE listings
+      SET game=${game}, title=${title}, description=${description}, account_details=${accountDetails},
+          seller_price=${price}, public_price=${price} + commission_bs, updated_at=NOW()
+      WHERE id=${id}
+    `;
+  }
   await sql`
-    UPDATE listings
-    SET title = ${title}, description = ${description}, account_details = ${accountDetails},
-        seller_price = ${price}, public_price = ${price + 0} + commission_bs,
-        updated_at = NOW()
-    WHERE id = ${id}
-  `;
-  await sql`
-    UPDATE users SET whatsapp = ${whatsapp}
-    WHERE id = (SELECT seller_id FROM listings WHERE id = ${id})
+    UPDATE users SET whatsapp=${whatsapp}
+    WHERE id=(SELECT seller_id FROM listings WHERE id=${id})
   `;
   redirect("/admin/panel?edited=1");
 }
