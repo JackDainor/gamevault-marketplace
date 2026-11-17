@@ -1,24 +1,22 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
-import { ensureListingsTable, getDb } from "@/lib/db";
+import { ensureSalesTable, getDb } from "@/lib/db";
 import PrintButton from "@/components/print-button";
 
 export const dynamic = "force-dynamic";
 
-type Sale = { code:string; game:string; title:string; description:string; account_details:string; public_price:string; seller_price:string; commission_bs:string; updated_at:string; seller_name:string; seller_email:string; seller_whatsapp:string };
+type Sale = { code:string; game:string; title:string; public_price:string; seller_price:string; commission_bs:string; sold_at:string; seller_name:string; seller_email:string; seller_whatsapp:string; buyer_name:string; buyer_whatsapp:string };
 
 export default async function SaleReceiptPage({params}:{params:Promise<{id:string}>}) {
   if (!(await isAdmin())) redirect("/admin");
-  await ensureListingsTable();
+  await ensureSalesTable();
   const {id}=await params;
   const sql=getDb();
   const rows=await sql`
-    SELECT l.code,l.game,l.title,l.description,l.account_details,l.public_price::text,
-      l.seller_price::text,l.commission_bs::text,l.updated_at,
-      u.name AS seller_name,u.email AS seller_email,u.whatsapp AS seller_whatsapp
-    FROM listings l JOIN users u ON u.id=l.seller_id
-    WHERE l.id=${id} AND l.status='sold' LIMIT 1
+    SELECT listing_code AS code,game,title,public_price::text,seller_price::text,commission_bs::text,sold_at,
+      seller_name,seller_email,seller_whatsapp,buyer_name,buyer_whatsapp
+    FROM sales WHERE id=${id} LIMIT 1
   ` as Sale[];
   const sale=rows[0];
   if(!sale) notFound();
@@ -35,7 +33,13 @@ export default async function SaleReceiptPage({params}:{params:Promise<{id:strin
       <p><span>Juego</span><strong>{sale.game}</strong></p>
       <p><span>Publicación</span><strong>{sale.title}</strong></p>
       <p><span>Precio público registrado</span><strong>Bs {Number(sale.public_price).toFixed(2)}</strong></p>
-      <p><span>Fecha de registro como vendida</span><strong>{new Date(sale.updated_at).toLocaleString("es-BO")}</strong></p>
+      <p><span>Precio base del vendedor</span><strong>Bs {Number(sale.seller_price).toFixed(2)}</strong></p>
+      <p><span>Comisión de GameVault</span><strong>Bs {Number(sale.commission_bs).toFixed(2)}</strong></p>
+      <p><span>Fecha de registro como vendida</span><strong>{new Date(sale.sold_at).toLocaleString("es-BO")}</strong></p>
+      <div className="receipt-divider"/>
+      <h2>Datos del comprador</h2>
+      <p><span>Nombre</span><strong>{sale.buyer_name || "No registrado"}</strong></p>
+      <p><span>WhatsApp</span><strong>{sale.buyer_whatsapp || "No registrado"}</strong></p>
       <div className="receipt-divider"/>
       <h2>Datos del vendedor</h2>
       <p><span>Nombre</span><strong>{sale.seller_name}</strong></p>
