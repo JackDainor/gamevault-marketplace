@@ -60,3 +60,36 @@ export async function ensureSettingsTable() {
     ON CONFLICT (key) DO NOTHING
   `;
 }
+
+
+export async function ensureSalesTable() {
+  await ensureListingsTable();
+  const sql = getDb();
+  await sql`
+    CREATE TABLE IF NOT EXISTS sales (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+      listing_code VARCHAR(20) NOT NULL,
+      game VARCHAR(60) NOT NULL,
+      title VARCHAR(120) NOT NULL,
+      seller_name VARCHAR(100) NOT NULL,
+      seller_email VARCHAR(255) NOT NULL,
+      seller_whatsapp VARCHAR(30) NOT NULL,
+      buyer_name VARCHAR(100) NOT NULL DEFAULT '',
+      buyer_whatsapp VARCHAR(30) NOT NULL DEFAULT '',
+      seller_price NUMERIC(12,2) NOT NULL,
+      commission_bs NUMERIC(12,2) NOT NULL,
+      public_price NUMERIC(12,2) NOT NULL,
+      sold_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS sales_listing_unique_idx ON sales(listing_id) WHERE listing_id IS NOT NULL`;
+  await sql`
+    INSERT INTO sales (listing_id, listing_code, game, title, seller_name, seller_email, seller_whatsapp,
+      seller_price, commission_bs, public_price, sold_at)
+    SELECT l.id,l.code,l.game,l.title,u.name,u.email,u.whatsapp,l.seller_price,l.commission_bs,l.public_price,l.updated_at
+    FROM listings l JOIN users u ON u.id=l.seller_id
+    WHERE l.status='sold'
+    ON CONFLICT (listing_id) WHERE listing_id IS NOT NULL DO NOTHING
+  `;
+}
