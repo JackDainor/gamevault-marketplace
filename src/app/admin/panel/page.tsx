@@ -7,6 +7,7 @@ import {
   createAdminListingAction,
   deleteListingAction,
   updateCommissionAction,
+  updateIntermediaryWhatsappAction,
   updateListingAction,
   updateListingStatusAction,
   searchListingsAction,
@@ -32,8 +33,8 @@ const createErrors:Record<string,string>={
 };
 
 export default async function AdminPanelPage({searchParams}:{searchParams:Promise<{
-  commissionSaved?:string;commissionError?:string;adminCreated?:string;adminCreateError?:string;
-  code?:string;edited?:string;deleted?:string;editError?:string;deleteError?:string;
+  commissionSaved?:string;commissionError?:string;intermediarySaved?:string;intermediaryError?:string;
+  adminCreated?:string;adminCreateError?:string;code?:string;edited?:string;deleted?:string;editError?:string;deleteError?:string;
 }>}) {
   if (!(await isAdmin())) redirect("/admin");
   await requireAdmin();
@@ -55,6 +56,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
     FROM sales ORDER BY sold_at DESC
   `;
   const setting=await sql`SELECT value FROM app_settings WHERE key='commission_bs' LIMIT 1`;
+  const intermediarySetting=await sql`SELECT value FROM app_settings WHERE key='intermediary_whatsapp' LIMIT 1`;
 
   return <main className="shell admin-page">
     <header className="nav"><Link href="/" className="brand">GAME<span>VAULT</span></Link><form action={adminLogoutAction}><PendingButton pendingText="Cerrando..." className="btn">Cerrar panel</PendingButton></form></header>
@@ -65,6 +67,17 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
       <form action={updateCommissionAction} className="commission-form"><label>Comisión (Bs)<input name="commission" type="number" min="0" max="100000" step="0.01" defaultValue={setting[0]?.value ?? "30"}/></label><PendingButton className="btn primary" pendingText="Guardando...">Guardar comisión</PendingButton></form>
       {params.commissionSaved&&<p className="success-message">Comisión actualizada. Se aplicará a las nuevas publicaciones.</p>}
       {params.commissionError&&<p className="form-error">Introduce un importe válido.</p>}
+    </section>
+
+    <section className="admin-settings intermediary-settings">
+      <div><h2>WhatsApp del intermediario</h2><p className="muted">Todas las consultas del botón de compra llegarán a este número. Los compradores no verán ni contactarán directamente al vendedor.</p></div>
+      <form action={updateIntermediaryWhatsappAction} className="commission-form">
+        <label>Número con código de país<input name="whatsapp" type="tel" required minLength={8} maxLength={20} defaultValue={intermediarySetting[0]?.value ?? ""} placeholder="Ej. +591 70000000"/></label>
+        <PendingButton className="btn primary" pendingText="Guardando...">Guardar WhatsApp</PendingButton>
+      </form>
+      {params.intermediarySaved&&<p className="success-message">WhatsApp del intermediario actualizado. Todas las consultas nuevas llegarán a este número.</p>}
+      {params.intermediaryError&&<p className="form-error">Escribe un número válido con código de país (entre 8 y 15 dígitos).</p>}
+      {!intermediarySetting[0]?.value&&<p className="form-error">Aún no configuraste el número. El botón de contacto de las publicaciones permanecerá desactivado hasta guardarlo.</p>}
     </section>
 
     <section className="admin-create">
