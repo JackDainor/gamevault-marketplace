@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
+import PendingButton from "@/components/pending-button";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function AccountPage() {
       <Link href="/publicar" className="btn primary">+ Publicar una cuenta</Link>
       <Link href="/mi-cuenta/publicaciones" className="btn" style={{width:"100%",marginTop:10}}>Ver mis publicaciones</Link>
       <Link href="/" className="auth-back" style={{marginTop:18}}>Volver al inicio</Link>
-      <form action={logoutAction}><button className="btn logout-btn">Cerrar sesión</button></form>
+      <form action={logoutAction}><PendingButton className="btn logout-btn" pendingText="Cerrando sesión...">Cerrar sesión</PendingButton></form>
     </section>
   </main>;
 }
