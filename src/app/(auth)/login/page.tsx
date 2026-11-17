@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction } from "@/app/actions/auth";
+import PendingButton from "@/components/pending-button";
 
 const initialState = { error: "" };
 
 export default function LoginPage() {
-  const [state, action, pending] = useActionState(loginAction, initialState);
+  const [state, action] = useActionState(loginAction, initialState);
   return <main className="auth-page">
     <section className="auth-card">
       <Link href="/" className="brand">GAME<span>VAULT</span></Link>
@@ -18,7 +19,7 @@ export default function LoginPage() {
         <label>Correo electrónico<input name="email" type="email" required autoComplete="email" placeholder="correo@ejemplo.com" /></label>
         <label>Contraseña<input name="password" type="password" required autoComplete="current-password" placeholder="Tu contraseña" /></label>
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
-        <button className="btn primary auth-submit" disabled={pending}>{pending ? "Ingresando..." : "Entrar"}</button>
+        <PendingButton className="btn primary auth-submit" pendingText="Ingresando...">Entrar</PendingButton>
       </form>
       <p className="auth-switch">¿Todavía no tienes cuenta? <Link href="/registro">Regístrate</Link></p>
       <Link className="auth-back" href="/">← Volver al inicio</Link>
