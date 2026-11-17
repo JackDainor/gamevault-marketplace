@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import NavigationFeedback from "@/components/navigation-feedback";
 
 export const metadata: Metadata = {
   title: "GameVault | Compra y vende cuentas gamer con confianza",
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#090d18", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="es"><body>{children}</body></html>;
+  return <html lang="es"><body><NavigationFeedback />{children}</body></html>;
 }
