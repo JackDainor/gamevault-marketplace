@@ -51,7 +51,8 @@ export async function createListingAction(_previous: ListingState, formData: For
     }
 
     await ensureListingsTable();
-    const commission = Math.max(0, Number(process.env.DEFAULT_COMMISSION_BS ?? "30") || 30);
+    const settingRows = await sql`SELECT value FROM app_settings WHERE key = 'commission_bs' LIMIT 1`;
+    const commission = Math.max(0, Number(settingRows[0]?.value ?? "30") || 30);
     const publicPrice = Math.round((sellerPrice + commission) * 100) / 100;
     const code = `GV-${randomBytes(4).toString("hex").toUpperCase()}`;
     const sql = getDb();
