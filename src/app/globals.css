@@ -64,3 +64,5 @@ button[aria-busy="true"]{pointer-events:none}
 .sale-buyer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 8px}
 .sale-buyer-fields input{min-width:0;width:100%;padding:8px 9px;border:1px solid #33445d;background:#0b1220;color:#fff;border-radius:8px;font-size:11px}
 @media(max-width:520px){.sale-buyer-fields{grid-template-columns:1fr}}
+
+a.nav-loading{pointer-events:none;opacity:.78}
