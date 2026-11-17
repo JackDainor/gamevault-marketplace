@@ -32,7 +32,7 @@ export async function createListingAction(_previous: ListingState, formData: For
   if (files.some(file => !ALLOWED_TYPES.includes(file.type))) return { error: "Solo se permiten imágenes JPG, PNG o WEBP." };
   if (files.some(file => file.size > MAX_FILE_SIZE)) return { error: "Cada imagen debe pesar como máximo 1 MB. Reduce su tamaño e inténtalo otra vez." };
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
-  if (totalBytes > 10 * 1024 * 1024) return { error: "El conjunto de imágenes supera los 10 MB." };
+  if (totalBytes > 4 * 1024 * 1024) return { error: "El conjunto de imágenes supera los 4 MB. Reduce el tamaño de las fotos e inténtalo otra vez." };
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) return { error: "El almacenamiento de imágenes todavía no está configurado." };
