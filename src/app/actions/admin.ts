@@ -130,7 +130,7 @@ export async function updateListingAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const accountDetails = String(formData.get("accountDetails") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
-  const phoneDigits = whatsapp.replace(/\\D/g, "");
+  const phoneDigits = whatsapp.replace(/\D/g, "");
   const price = Number(formData.get("price"));
   const allowedGames = ["Free Fire", "Roblox", "Fortnite", "Call of Duty", "Otro"];
   if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/panel?editError=id");
