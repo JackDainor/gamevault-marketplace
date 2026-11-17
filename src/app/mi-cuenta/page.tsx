@@ -16,8 +16,10 @@ export default async function AccountPage() {
         <p><strong>Correo</strong><span>{user.email}</span></p>
         <p><strong>WhatsApp</strong><span>{user.whatsapp}</span></p>
       </div>
-      <div className="account-notice"><strong>Próximo paso</strong><p>Estamos preparando el formulario para publicar cuentas, subir imágenes y consultar el estado de tus anuncios.</p></div>
-      <Link href="/" className="btn">Volver al inicio</Link>
+      <div className="account-notice"><strong>Tu espacio de vendedor</strong><p>Publica cuentas, consulta el estado de tus anuncios y revisa los precios que verán los compradores.</p></div>
+      <Link href="/publicar" className="btn primary">+ Publicar una cuenta</Link>
+      <Link href="/mi-cuenta/publicaciones" className="btn" style={{width:"100%",marginTop:10}}>Ver mis publicaciones</Link>
+      <Link href="/" className="auth-back" style={{marginTop:18}}>Volver al inicio</Link>
       <form action={logoutAction}><button className="btn logout-btn">Cerrar sesión</button></form>
     </section>
   </main>;
