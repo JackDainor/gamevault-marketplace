@@ -22,6 +22,7 @@ export async function ensureUsersTable() {
 
 export async function ensureListingsTable() {
   await ensureUsersTable();
+  await ensureSettingsTable();
   const sql = getDb();
   await sql`
     CREATE TABLE IF NOT EXISTS listings (
