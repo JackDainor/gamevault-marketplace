@@ -1,11 +1,15 @@
 "use server";
 
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual, randomBytes } from "node:crypto";
+import { put } from "@vercel/blob";
 import { redirect } from "next/navigation";
-import { createAdminSession, destroyAdminSession, isAdmin } from "@/lib/auth";
+import { createAdminSession, destroyAdminSession, isAdmin, hashPassword } from "@/lib/auth";
 import { ensureListingsTable, getDb } from "@/lib/db";
 
 export type AdminState = { error?: string };
+
+const MAX_FILE_SIZE = 1 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function adminLoginAction(_previous: AdminState, formData: FormData): Promise<AdminState> {
   const password = String(formData.get("password") ?? "");
@@ -23,21 +27,90 @@ export async function adminLogoutAction() {
   redirect("/admin");
 }
 
+export async function createAdminListingAction(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+
+  const game = String(formData.get("game") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const accountDetails = String(formData.get("accountDetails") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const phoneDigits = whatsapp.replace(/\\D/g, "");
+  const price = Number(formData.get("price"));
+  const allowedGames = ["Free Fire", "Roblox", "Fortnite", "Call of Duty", "Otro"];
+
+  if (!allowedGames.includes(game)) redirect("/admin/panel?adminCreateError=game");
+  if (title.length < 4 || title.length > 120) redirect("/admin/panel?adminCreateError=title");
+  if (description.length < 20 || description.length > 1800) redirect("/admin/panel?adminCreateError=description");
+  if (accountDetails.length < 5 || accountDetails.length > 1200) redirect("/admin/panel?adminCreateError=details");
+  if (phoneDigits.length < 8 || phoneDigits.length > 15) redirect("/admin/panel?adminCreateError=whatsapp");
+  if (!Number.isFinite(price) || price <= 0 || price > 1000000) redirect("/admin/panel?adminCreateError=price");
+
+  const files = formData.getAll("images").filter((item): item is File => item instanceof File && item.size > 0);
+  if (files.length < 1 || files.length > 10) redirect("/admin/panel?adminCreateError=images");
+  if (files.some(file => !ALLOWED_TYPES.includes(file.type))) redirect("/admin/panel?adminCreateError=type");
+  if (files.some(file => file.size > MAX_FILE_SIZE)) redirect("/admin/panel?adminCreateError=size");
+  if (files.reduce((sum, file) => sum + file.size, 0) > 4 * 1024 * 1024) redirect("/admin/panel?adminCreateError=total");
+
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) redirect("/admin/panel?adminCreateError=storage");
+
+  const code = `GV-${randomBytes(4).toString("hex").toUpperCase()}`;
+  try {
+    const imageUrls: string[] = [];
+    for (const file of files) {
+      const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const blob = await put(`listings/admin/${code}/${randomBytes(12).toString("hex")}.${extension}`, file, {
+        access: "public",
+        addRandomSuffix: true,
+        contentType: file.type,
+        token,
+      });
+      imageUrls.push(blob.url);
+    }
+
+    await ensureListingsTable();
+    const sql = getDb();
+    const sellerEmail = `admin-${code.toLowerCase()}@gamevault.local`;
+    const sellerRows = await sql`
+      INSERT INTO users (name, email, whatsapp, password_hash)
+      VALUES ('GameVault', ${sellerEmail}, ${whatsapp}, ${hashPassword(randomBytes(32).toString("hex"))})
+      RETURNING id
+    `;
+    const adminSellerId = sellerRows[0]?.id;
+    if (!adminSellerId) throw new Error("No se pudo crear el vendedor interno.");
+
+    // El administrador define directamente el precio final; no se aplica comisión adicional.
+    await sql`
+      INSERT INTO listings
+        (code, seller_id, game, title, description, account_details, seller_price, commission_bs, public_price, images, status)
+      VALUES
+        (${code}, ${String(adminSellerId)}, ${game}, ${title}, ${description}, ${accountDetails},
+         ${price}, 0, ${price}, ${JSON.stringify(imageUrls)}::jsonb, 'approved')
+    `;
+  } catch (error) {
+    console.error("ADMIN_CREATE_LISTING_ERROR", error);
+    redirect("/admin/panel?adminCreateError=save");
+  }
+
+  redirect("/admin/panel?adminCreated=1");
+}
+
 export async function updateListingStatusAction(formData: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const id = String(formData.get("listingId") ?? "");
   const status = String(formData.get("status") ?? "");
-  if (!["pending", "approved", "reserved", "sold", "rejected"].includes(status)) return;
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !["pending", "approved", "reserved", "sold", "rejected"].includes(status)) return;
   await ensureListingsTable();
   const sql = getDb();
   await sql`UPDATE listings SET status = ${status}, updated_at = NOW() WHERE id = ${id}`;
-  redirect("/admin");
+  redirect("/admin/panel");
 }
 
 export async function updateCommissionAction(formData: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const amount = Number(formData.get("commission"));
-  if (!Number.isFinite(amount) || amount < 0 || amount > 100000) redirect("/admin?commissionError=1");
+  if (!Number.isFinite(amount) || amount < 0 || amount > 100000) redirect("/admin/panel?commissionError=1");
   await ensureListingsTable();
   const sql = getDb();
   await sql`
@@ -45,5 +118,5 @@ export async function updateCommissionAction(formData: FormData) {
     VALUES ('commission_bs', ${String(amount)}, NOW())
     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
   `;
-  redirect("/admin?commissionSaved=1");
+  redirect("/admin/panel?commissionSaved=1");
 }
