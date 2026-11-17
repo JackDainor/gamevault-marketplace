@@ -17,3 +17,46 @@
 .admin-create-form .auth-submit{grid-column:1/-1}
 .admin-create-note{font-size:12px;line-height:1.6;color:#91a0b5;margin:15px 0 0}
 @media(max-width:650px){.admin-create{padding:19px 15px}.admin-create-form{grid-template-columns:1fr}.admin-create-form>label{grid-column:1/-1}}
+
+
+/* Loading feedback for server actions */
+.button-spinner{display:inline-block;width:15px;height:15px;flex:0 0 15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:button-spin .7s linear infinite}
+@keyframes button-spin{to{transform:rotate(360deg)}}
+button:disabled{opacity:.7;cursor:wait!important;transform:none!important}
+button[aria-busy="true"]{pointer-events:none}
+
+/* Admin inventory management */
+.admin-search-form{display:flex;gap:9px;align-items:center;margin:0 0 20px}
+.admin-search-form input{flex:1;min-width:0;padding:13px 15px;border:1px solid #33445d;background:#0b1220;color:#fff;border-radius:11px;font:inherit}
+.admin-edit-details{margin-top:15px;border:1px solid #33445d;border-radius:12px;padding:12px;background:#0b1220}
+.admin-edit-details summary{cursor:pointer;color:#a3e635;font-weight:800;font-size:13px}
+.admin-edit-form{display:grid;gap:12px;margin-top:15px}
+.admin-edit-form label{display:grid;gap:7px;color:#dce5f2;font-size:12px;font-weight:700}
+.admin-edit-form input,.admin-edit-form textarea{width:100%;padding:12px;border:1px solid #33445d;background:#111827;color:#fff;border-radius:10px;font:inherit}
+.admin-edit-form textarea{resize:vertical}
+.admin-edit-form .btn{justify-self:start}
+.admin-delete-form{margin-top:10px}
+.danger-btn{color:#fca5a5;border-color:#ef444466;background:#ef444411}
+.admin-sales{padding:45px 0 20px}
+.admin-sales-list{display:grid;gap:12px}
+.admin-sale-card{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px;border:1px solid #26344a;background:#111827;border-radius:16px}
+.admin-sale-card h3{margin:7px 0}
+.admin-sale-card p{font-size:12px;margin:6px 0}
+.admin-sale-card strong{color:#a3e635}
+.receipt-page{min-height:100vh;background:#e8edf3;color:#111827;padding:30px 16px}
+.receipt-actions{width:min(760px,100%);margin:0 auto 18px;display:flex;justify-content:space-between;gap:10px}
+.receipt-paper{width:min(760px,100%);margin:auto;padding:46px;background:#fff;border-radius:16px;box-shadow:0 12px 45px #10182820}
+.receipt-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:45px}
+.receipt-header .brand{color:#111827}
+.receipt-paper .eyebrow{color:#4d7c0f}
+.receipt-paper h1{font:700 34px 'Space Grotesk';margin:8px 0}
+.receipt-paper h2{font:700 17px 'Space Grotesk';margin:24px 0 14px}
+.receipt-code{color:#475569}
+.receipt-paper>p:not(.eyebrow):not(.receipt-code){display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+.receipt-paper>p span{color:#64748b}
+.receipt-paper>p strong{text-align:right;overflow-wrap:anywhere}
+.receipt-divider{height:1px;background:#cbd5e1;margin:22px 0}
+.receipt-note{margin-top:30px;padding:15px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;color:#475569;font-size:12px;line-height:1.6}
+.receipt-paper footer{margin-top:35px;padding-top:15px;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px}
+@media(max-width:600px){.admin-search-form{flex-wrap:wrap}.admin-search-form input{flex-basis:100%}.admin-sale-card{align-items:flex-start;flex-direction:column}.receipt-paper{padding:25px 18px}.receipt-header{align-items:flex-start;flex-direction:column}.receipt-paper>p:not(.eyebrow):not(.receipt-code){align-items:flex-start;flex-direction:column;gap:4px}.receipt-paper>p strong{text-align:left}}
+@media print{body{background:#fff!important}.receipt-page{padding:0;background:#fff}.receipt-paper{width:100%;padding:0;border-radius:0;box-shadow:none}.no-print{display:none!important}.receipt-note{break-inside:avoid}}
