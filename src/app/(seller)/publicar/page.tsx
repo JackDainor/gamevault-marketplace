@@ -41,7 +41,7 @@ export default function PublishPage() {
           <p className="price-total"><span>Precio que verá el comprador</span><strong>Bs {(numericPrice + commission).toFixed(2)}</strong></p>
           <small>La comisión actual es de Bs 30 por publicación y puede ajustarse desde la configuración administrativa.</small>
         </div>
-        <label>Fotos de la cuenta (1 a 10)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required onChange={handleImages} /><small>Elige desde la galería del teléfono. JPG, PNG o WEBP. Máximo 1 MB por imagen.</small></label>
+        <label>Fotos de la cuenta (1 a 10)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required onChange={handleImages} /><small>Elige desde la galería del teléfono. JPG, PNG o WEBP. Máximo 1 MB por imagen y 4 MB en total.</small></label>
         {previews.length > 0 && <div className="image-preview-grid">{previews.map((src,index)=><img src={src} alt={`Vista previa ${index+1}`} key={src}/>)}</div>}
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
         <button className="btn primary auth-submit" disabled={pending}>{pending ? "Subiendo fotos y publicando..." : "Enviar para revisión"}</button>
