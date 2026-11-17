@@ -104,7 +104,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
       {clients.length===0?<div className="empty-state"><h3>{clientSearch?"No encontramos clientes":"Aún no hay clientes registrados"}</h3><p className="muted">{clientSearch?"Prueba con otro nombre, correo o número.":"Cuando una persona cree una cuenta, aparecerá aquí."}</p></div>:
         <div className="admin-clients-list">{clients.map((client:any)=><article className="admin-client-card" key={client.id}>
           <div><span className="eyebrow">{Number(client.listings_count)>0?"VENDEDOR REGISTRADO":"CLIENTE REGISTRADO"}</span><h3>{client.name}</h3><p className="muted">Correo: <a href={`mailto:${client.email}`}>{client.email}</a></p><p className="muted">WhatsApp: {client.whatsapp}</p><p className="muted">Registro: {new Date(client.created_at).toLocaleString("es-BO")}</p></div>
-          <div className="admin-client-meta"><span className="status-pill status-approved">{Number(client.listings_count)} publicaciones</span><a className="whatsapp-link" href={`https://wa.me/${String(client.whatsapp).replace(/\\D/g,"")}`} target="_blank" rel="noreferrer">Contactar por WhatsApp</a></div>
+          <div className="admin-client-meta"><span className="status-pill status-approved">{Number(client.listings_count)} publicaciones</span><a className="whatsapp-link" href={`https://wa.me/${String(client.whatsapp).replace(/\D/g,"")}`} target="_blank" rel="noreferrer">Contactar por WhatsApp</a></div>
         </article>)}</div>}
     </section>
 
