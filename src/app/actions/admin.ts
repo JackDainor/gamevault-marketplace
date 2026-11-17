@@ -15,7 +15,7 @@ export async function adminLoginAction(_previous: AdminState, formData: FormData
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return { error: "Contraseña incorrecta." };
   await createAdminSession();
-  redirect("/admin");
+  redirect("/admin/panel");
 }
 
 export async function adminLogoutAction() {
