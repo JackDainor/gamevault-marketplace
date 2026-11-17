@@ -44,3 +44,18 @@ export async function ensureListingsTable() {
   await sql`CREATE INDEX IF NOT EXISTS listings_status_created_idx ON listings(status, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS listings_seller_created_idx ON listings(seller_id, created_at DESC)`;
 }
+
+export async function ensureSettingsTable() {
+  const sql = getDb();
+  await sql`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key VARCHAR(80) PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    INSERT INTO app_settings (key, value) VALUES ('commission_bs', '30')
+    ON CONFLICT (key) DO NOTHING
+  `;
+}
