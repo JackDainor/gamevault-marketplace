@@ -19,3 +19,27 @@ export async function ensureUsersTable() {
     )
   `;
 }
+
+export async function ensureListingsTable() {
+  const sql = getDb();
+  await sql`
+    CREATE TABLE IF NOT EXISTS listings (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      code VARCHAR(20) NOT NULL UNIQUE,
+      seller_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      game VARCHAR(60) NOT NULL,
+      title VARCHAR(120) NOT NULL,
+      description TEXT NOT NULL,
+      account_details TEXT NOT NULL,
+      seller_price NUMERIC(12,2) NOT NULL,
+      commission_bs NUMERIC(12,2) NOT NULL DEFAULT 30,
+      public_price NUMERIC(12,2) NOT NULL,
+      images JSONB NOT NULL DEFAULT '[]'::jsonb,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS listings_status_created_idx ON listings(status, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS listings_seller_created_idx ON listings(seller_id, created_at DESC)`;
+}
