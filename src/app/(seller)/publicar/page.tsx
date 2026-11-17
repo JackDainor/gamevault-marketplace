@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { createListingAction } from "@/app/actions/listings";
+import PendingButton from "@/components/pending-button";
 
 const initialState = { error: "" };
 
 export default function PublishPage() {
-  const [state, action, pending] = useActionState(createListingAction, initialState);
+  const [state, action] = useActionState(createListingAction, initialState);
   const [price, setPrice] = useState("");
   const [previews, setPreviews] = useState<string[]>([]);
   const commission = 30;
@@ -44,7 +45,7 @@ export default function PublishPage() {
         <label>Fotos de la cuenta (1 a 10)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required onChange={handleImages} /><small>Elige desde la galería del teléfono. JPG, PNG o WEBP. Máximo 1 MB por imagen y 4 MB en total.</small></label>
         {previews.length > 0 && <div className="image-preview-grid">{previews.map((src,index)=><img src={src} alt={`Vista previa ${index+1}`} key={src}/>)}</div>}
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
-        <button className="btn primary auth-submit" disabled={pending}>{pending ? "Subiendo fotos y publicando..." : "Enviar para revisión"}</button>
+        <PendingButton className="btn primary auth-submit" pendingText="Subiendo fotos y publicando...">Enviar para revisión</PendingButton>
       </form>
       <p className="auth-switch">Al enviar, confirmas que tienes autorización para vender esta cuenta y que la información es correcta.</p>
     </section>
