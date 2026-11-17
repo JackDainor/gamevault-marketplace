@@ -9,6 +9,7 @@ import {
   updateCommissionAction,
   updateListingAction,
   updateListingStatusAction,
+  searchListingsAction,
 } from "@/app/actions/admin";
 import PendingButton from "@/components/pending-button";
 
@@ -86,7 +87,7 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
 
     <section className="admin-listings">
       <div className="section-head"><div><span className="eyebrow">INVENTARIO</span><h2>Publicaciones ({listings.length})</h2><p className="muted">Busca por el código GV de cualquier publicación para encontrarla rápidamente.</p></div></div>
-      <form method="GET" className="admin-search-form"><input name="code" defaultValue={searchCode} placeholder="Ej. GV-A1B2C3D4" aria-label="Buscar por código de publicación"/><button className="btn primary" type="submit">Buscar código</button>{searchCode&&<Link href="/admin/panel" className="btn">Limpiar</Link>}</form>
+      <form action={searchListingsAction} className="admin-search-form"><input name="code" defaultValue={searchCode} placeholder="Ej. GV-A1B2C3D4" aria-label="Buscar por código de publicación"/><PendingButton className="btn primary" pendingText="Buscando...">Buscar código</PendingButton>{searchCode&&<Link href="/admin/panel" className="btn">Limpiar</Link>}</form>
       {params.edited&&<p className="success-message">Los cambios de la publicación se guardaron correctamente.</p>}
       {params.deleted&&<p className="success-message">La publicación fue eliminada.</p>}
       {params.editError&&<p className="form-error">No se pudieron guardar los cambios. Revisa los campos y vuelve a intentarlo.</p>}
@@ -101,11 +102,11 @@ export default async function AdminPanelPage({searchParams}:{searchParams:Promis
           <details className="admin-edit-details"><summary>Editar publicación</summary>
             <form action={updateListingAction} className="admin-edit-form">
               <input type="hidden" name="listingId" value={item.id}/>
-              <label>Título<input name="title" required minLength={4} maxLength={120} defaultValue={item.title}/></label>
+              <label>Juego<select name="game" required defaultValue={item.game}><option>Free Fire</option><option>Roblox</option><option>Fortnite</option><option>Call of Duty</option><option>Otro</option></select></label><label>Título<input name="title" required minLength={4} maxLength={120} defaultValue={item.title}/></label>
               <label>Descripción<textarea name="description" required minLength={20} maxLength={1800} rows={3} defaultValue={item.description}/></label>
               <label>Detalles de la cuenta<textarea name="accountDetails" required minLength={5} maxLength={1200} rows={3} defaultValue={item.account_details}/></label>
               <label>WhatsApp<input name="whatsapp" required type="tel" defaultValue={item.seller_whatsapp}/></label>
-              <label>Precio base (Bs)<input name="price" required type="number" min="1" max="1000000" step="0.01" defaultValue={item.seller_price}/></label>
+              <label>Precio base (Bs)<input name="price" required type="number" min="1" max="1000000" step="0.01" defaultValue={item.seller_price}/></label><label>Reemplazar fotografías (opcional)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Si seleccionas nuevas fotos, reemplazarán las anteriores. Hasta 10 imágenes; máximo 1 MB cada una y 4 MB en total.</small></label>
               <PendingButton className="btn primary" pendingText="Guardando cambios...">Guardar cambios</PendingButton>
             </form>
           </details>
