@@ -127,7 +127,7 @@ export async function updateListingStatusAction(formData: FormData) {
 export async function updateIntermediaryWhatsappAction(formData: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
-  const phoneDigits = whatsapp.replace(/\\D/g, "");
+  const phoneDigits = whatsapp.replace(/\D/g, "");
   if (phoneDigits.length < 8 || phoneDigits.length > 15) {
     redirect("/admin/panel?intermediaryError=1");
   }
