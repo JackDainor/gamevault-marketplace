@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { registerAction } from "@/app/actions/auth";
+import PendingButton from "@/components/pending-button";
 
 const initialState = { error: "" };
 
 export default function RegisterPage() {
-  const [state, action, pending] = useActionState(registerAction, initialState);
+  const [state, action] = useActionState(registerAction, initialState);
   return <main className="auth-page">
     <section className="auth-card">
       <Link href="/" className="brand">GAME<span>VAULT</span></Link>
@@ -20,7 +21,7 @@ export default function RegisterPage() {
         <label>WhatsApp<input name="whatsapp" required minLength={7} maxLength={30} autoComplete="tel" placeholder="+591 70000000" /></label>
         <label>Contraseña<input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="Mínimo 8 caracteres" /></label>
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
-        <button className="btn primary auth-submit" disabled={pending}>{pending ? "Creando cuenta..." : "Crear cuenta"}</button>
+        <PendingButton className="btn primary auth-submit" pendingText="Creando cuenta...">Crear cuenta</PendingButton>
       </form>
       <p className="auth-switch">¿Ya tienes cuenta? <Link href="/login">Inicia sesión</Link></p>
       <Link className="auth-back" href="/">← Volver al inicio</Link>
