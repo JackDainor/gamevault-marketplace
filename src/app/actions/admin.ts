@@ -4,7 +4,7 @@ import { timingSafeEqual, randomBytes } from "node:crypto";
 import { put } from "@vercel/blob";
 import { redirect } from "next/navigation";
 import { createAdminSession, destroyAdminSession, isAdmin, hashPassword } from "@/lib/auth";
-import { ensureListingsTable, getDb } from "@/lib/db";
+import { ensureListingsTable, ensureSalesTable, getDb } from "@/lib/db";
 
 export type AdminState = { error?: string };
 
@@ -103,6 +103,23 @@ export async function updateListingStatusAction(formData: FormData) {
   if (!/^[0-9a-f-]{36}$/i.test(id) || !["pending", "approved", "reserved", "sold", "rejected"].includes(status)) return;
   await ensureListingsTable();
   const sql = getDb();
+  if (status === "sold") {
+    await ensureSalesTable();
+    const buyerName = String(formData.get("buyerName") ?? "").trim().slice(0, 100);
+    const buyerWhatsapp = String(formData.get("buyerWhatsapp") ?? "").trim().slice(0, 30);
+    await sql`
+      INSERT INTO sales (
+        listing_id, listing_code, game, title, seller_name, seller_email, seller_whatsapp,
+        buyer_name, buyer_whatsapp, seller_price, commission_bs, public_price, sold_at
+      )
+      SELECT l.id,l.code,l.game,l.title,u.name,u.email,u.whatsapp,
+        ${buyerName},${buyerWhatsapp},l.seller_price,l.commission_bs,l.public_price,NOW()
+      FROM listings l JOIN users u ON u.id=l.seller_id
+      WHERE l.id=${id}
+      ON CONFLICT (listing_id) WHERE listing_id IS NOT NULL DO UPDATE SET
+        buyer_name=EXCLUDED.buyer_name,buyer_whatsapp=EXCLUDED.buyer_whatsapp,sold_at=NOW()
+    `;
+  }
   await sql`UPDATE listings SET status = ${status}, updated_at = NOW() WHERE id = ${id}`;
   redirect("/admin/panel");
 }
