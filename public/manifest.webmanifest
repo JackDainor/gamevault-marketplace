@@ -1,0 +1,10 @@
+{
+  "name": "GameVault",
+  "short_name": "GameVault",
+  "description": "Marketplace de cuentas gamer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d18",
+  "theme_color": "#090d18",
+  "icons": []
+}
